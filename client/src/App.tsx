@@ -11,7 +11,7 @@ interface Message {
 type View = 'chat' | 'traceability';
 
 function App() {
-  const [currentView, setCurrentView] = useState<View>('chat' as View);
+  const [currentView, setCurrentView] = useState<View>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [config, setConfig] = useState({ model_smart: 'gemini-2.0-flash-exp' });
