@@ -4,12 +4,17 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"wrangler dev\" \"cd client && npm run dev\"",
-    "deploy": "cd client && npm run build && cd .. && wrangler deploy",
+    "dev": "concurrently \"wrangler dev\" \"cd client && bun run dev\"",
+    "build": "cd client && bun run build",
+    "deploy": "bun run build && bun run migrate:remote && wrangler deploy",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "wrangler d1 migrations apply hdb-stats-db",
-    "client:install": "cd client && npm install",
-    "setup": "npm install && npm run client:install"
+    "migrate:local": "wrangler d1 migrations apply DB --local",
+    "migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "client:install": "cd client && bun install",
+    "setup": "bun install && bun run client:install",
+    "type-check": "tsc --noEmit",
+    "cf:tail": "wrangler tail",
+    "cf:logs": "wrangler tail --format pretty"
   },
   "dependencies": {
     "hono": "^4.0.0",

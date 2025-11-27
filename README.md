@@ -59,67 +59,74 @@ sgd-hbd-advisor/
 ## Setup Instructions
 
 ### Prerequisites
-- Node.js 18+
-- npm or bun
+- **Bun** (recommended) or Node.js 18+
 - Cloudflare account with Workers enabled
 - Google AI API key
 
 ### 1. Install Dependencies
 
 ```bash
-# Install root dependencies
-npm install
+# Install all dependencies (root + client)
+bun run setup
+```
 
-# Install client dependencies
-cd client && npm install
+Or manually:
+```bash
+bun install
+cd client && bun install
 cd ..
 ```
 
-### 2. Create D1 Database
+### 2. D1 Database & KV
+
+The database and KV namespace are already configured in `wrangler.toml`:
+- D1 Database: `hbd-advisor` (ID: `781a9476-2cf0-43fc-94fc-742a16e39af5`)
+- KV Namespace: `KV` (ID: `80f8c30b48ad4112ba0b5d27e573f6eb`)
+
+### 3. Set Secrets
 
 ```bash
-npx wrangler d1 create hdb-stats-db
+wrangler secret put CLOUDFLARE_ACCOUNT_ID
+wrangler secret put GOOGLE_AI_API_KEY
 ```
 
-Update `wrangler.toml` with the returned `database_id`.
-
-### 3. Create KV Namespace
+### 4. Generate and Apply Migrations
 
 ```bash
-npx wrangler kv namespace create CONFIG_KV
+# Generate migrations from schema
+bun run db:generate
+
+# Apply locally for testing
+bun run migrate:local
+
+# Apply to remote (production)
+bun run migrate:remote
 ```
 
-Update `wrangler.toml` with the returned `id`.
-
-### 4. Set Secrets
+### 5. Run Locally
 
 ```bash
-npx wrangler secret put CLOUDFLARE_ACCOUNT_ID
-npx wrangler secret put GOOGLE_AI_API_KEY
-```
-
-### 5. Generate and Apply Migrations
-
-```bash
-npm run db:generate
-npm run db:migrate
-```
-
-### 6. Run Locally
-
-```bash
-npm run dev
+bun run dev
 ```
 
 This will start:
 - Worker on `http://localhost:8787`
 - React dev server on `http://localhost:5173`
 
-### 7. Deploy to Cloudflare
+### 6. Deploy to Cloudflare
+
+The deploy script handles everything automatically:
 
 ```bash
-npm run deploy
+bun run deploy
 ```
+
+This will:
+1. Build the React client
+2. Apply migrations to remote D1 database
+3. Deploy the Worker to Cloudflare
+
+Perfect for CI/CD pipelines!
 
 ## API Endpoints
 
@@ -145,6 +152,16 @@ GET /api/workflow/:id
 ```
 WebSocket: /agents/advisor-agent/session-name
 ```
+
+### Observability & Traceability
+```
+GET /api/observability/logs?limit=100&level=error&component=AdvisorAgent
+GET /api/observability/traces?limit=50&component=MarketScanWorkflow
+GET /api/observability/traces/:traceId/events
+GET /api/observability/stats
+```
+
+Access the **Traceability Dashboard** in the UI to view real-time logs, traces, and system statistics.
 
 ## WebSocket Message Format
 
@@ -198,6 +215,16 @@ Uses Workers Static Assets configuration:
 - Selective Worker routing with `run_worker_first`
 - Automatic asset serving
 
+### 5. Comprehensive Observability
+Full transparency with D1-backed logging and tracing:
+- **Traces Table**: Track every operation with status, duration, metadata
+- **Trace Events**: Detailed event logs with code locations
+- **Logs Table**: Application logs linked to traces
+- **Real-time Dashboard**: Shadcn UI dashboard for monitoring
+- **Code Location Tracking**: Know exactly where each log originated
+- **Performance Monitoring**: Track API call durations, workflow steps
+- **Error Tracing**: Link errors back to their originating trace
+
 ## Configuration Notes
 
 ### Critical Wrangler Settings
@@ -218,13 +245,55 @@ https://gateway.ai.cloudflare.com/v1/{account_id}/hdb-gateway/google-ai-studio/v
 ## Development Scripts
 
 ```bash
-npm run dev           # Run worker + client concurrently
-npm run deploy        # Build client and deploy worker
-npm run db:generate   # Generate Drizzle migrations
-npm run db:migrate    # Apply migrations to D1
-npm run client:install # Install client dependencies
-npm run setup         # Install all dependencies
+# Development
+bun run dev              # Run worker + client concurrently
+bun run build            # Build React client
+bun run type-check       # TypeScript type checking
+
+# Database
+bun run db:generate      # Generate Drizzle migrations from schema
+bun run migrate:local    # Apply migrations to local D1 (--local)
+bun run migrate:remote   # Apply migrations to remote D1 (--remote)
+
+# Deployment (CI/CD Optimized)
+bun run deploy           # Build + Migrate + Deploy (all-in-one)
+
+# Setup
+bun run setup            # Install all dependencies (root + client)
+bun run client:install   # Install client dependencies only
+
+# Monitoring
+bun run cf:tail          # Tail Cloudflare Worker logs
+bun run cf:logs          # Tail logs with pretty formatting
 ```
+
+## CI/CD Configuration
+
+### Cloudflare Dashboard CI/CD
+
+This project is optimized for Cloudflare's built-in CI/CD. To set up:
+
+1. **Push to GitHub**: Commit and push your code to a GitHub repository
+2. **Connect in Cloudflare Dashboard**:
+   - Navigate to Workers & Pages > Your Worker > Settings > Builds & Deployments
+   - Connect your GitHub repository
+   - Select the branch to deploy from (e.g., `main`)
+3. **Configure Build Settings**:
+   ```
+   Build command: bun run deploy
+   Build output directory: (leave empty - handled by wrangler)
+   Root directory: /
+   ```
+4. **Environment Variables**: Set in Dashboard under Settings > Variables and Secrets:
+   - `CLOUDFLARE_ACCOUNT_ID`
+   - `GOOGLE_AI_API_KEY`
+
+The `deploy` script automatically handles:
+- ✅ Building the React client (`bun run build`)
+- ✅ Applying D1 migrations to remote (`bun run migrate:remote`)
+- ✅ Deploying the Worker (`wrangler deploy`)
+
+**No additional configuration needed!** Every push to your selected branch will automatically build and deploy.
 
 ## Next Steps
 
