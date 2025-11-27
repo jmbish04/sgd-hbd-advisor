@@ -81,7 +81,7 @@ export class Logger {
 
     try {
       // Get the trace to calculate duration
-      const trace = await this.db.select().from(traces).where(traces.id, id).get();
+      const trace = await this.db.select().from(traces).where(eq(traces.id, id)).get();
 
       if (trace) {
         const duration = new Date(now).getTime() - new Date(trace.startTime).getTime();
