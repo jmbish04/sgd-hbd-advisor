@@ -1,12 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { AgentClient } from 'agents/client';
+import Traceability from './components/Traceability';
 
 interface Message {
   role: string;
   content: string;
 }
 
+type View = 'chat' | 'traceability';
+
 function App() {
+  const [currentView, setCurrentView] = useState<View>('chat');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [config, setConfig] = useState({ model_smart: 'gemini-2.0-flash-exp' });
@@ -72,10 +76,37 @@ function App() {
     }
   };
 
+  if (currentView === 'traceability') {
+    return <Traceability />;
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Left: Chat */}
       <div className="flex-1 flex flex-col p-4">
+        {/* Navigation */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setCurrentView('chat')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              currentView === 'chat'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            Chat
+          </button>
+          <button
+            onClick={() => setCurrentView('traceability')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              currentView === 'traceability'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            Traceability
+          </button>
+        </div>
         <div className="bg-white rounded-lg shadow-md p-4 mb-4">
           <h1 className="text-2xl font-bold text-gray-800">HDB Autonomous Advisor</h1>
           <div className="flex items-center gap-2 mt-2">

@@ -9,7 +9,7 @@ export interface Env {
 
   // Storage bindings
   DB: D1Database;
-  CONFIG_KV: KVNamespace;
+  KV: KVNamespace;
 
   // Secrets (set via wrangler secret)
   CLOUDFLARE_ACCOUNT_ID: string;

@@ -11,13 +11,13 @@ run_worker_first = ["/api/*", "/agents/*"]
 # D1 Database
 [[d1_databases]]
 binding = "DB"
-database_name = "hdb-stats-db"
-database_id = "D1_ID_PLACEHOLDER"
+database_name = "hbd-advisor"
+database_id = "781a9476-2cf0-43fc-94fc-742a16e39af5"
 
 # KV Namespace
 [[kv_namespaces]]
-binding = "CONFIG_KV"
-id = "KV_ID_PLACEHOLDER"
+binding = "KV"
+id = "80f8c30b48ad4112ba0b5d27e573f6eb"
 
 # Durable Object Binding for Agent
 [[durable_objects.bindings]]
