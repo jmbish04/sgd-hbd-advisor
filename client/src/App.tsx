@@ -31,7 +31,22 @@ function App() {
     };
 
     client.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      try {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'INIT') {
+          // Initialize with existing state
+          setMessages(data.state.messages || []);
+        } else if (data.type === 'RESPONSE') {
+          setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
+        } else if (data.type === 'ERROR') {
+          console.error('Agent error:', data.error);
+          setMessages(prev => [...prev, { role: 'error', content: `Error: ${data.error}` }]);
+        }
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error, event.data);
+        setMessages(prev => [...prev, { role: 'error', content: 'Received an invalid message from the server.' }]);
+      }
 
       if (data.type === 'INIT') {
         // Initialize with existing state
