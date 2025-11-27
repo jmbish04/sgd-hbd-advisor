@@ -3,6 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2025-04-03"
 compatibility_flags = ["nodejs_compat"]
 
+# Build command for frontend assets
+[build]
+command = "npm run build"
+
 # Static Assets Configuration (for React SPA)
 [assets]
 directory = "./client/dist"
