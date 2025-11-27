@@ -24,7 +24,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "wrangler": "^3.100.0",
+    "wrangler": "^4.51.0",
     "drizzle-kit": "^0.28.0",
     "@cloudflare/workers-types": "^4.20241127.0",
     "concurrently": "^9.1.0",

@@ -60,6 +60,7 @@ sgd-hbd-advisor/
 
 ### Prerequisites
 - **Bun** (recommended) or Node.js 18+
+- **Wrangler v4.51.0+** (required for Static Assets with selective routing)
 - Cloudflare account with Workers enabled
 - Google AI API key
 
@@ -75,6 +76,19 @@ Or manually:
 bun install
 cd client && bun install
 cd ..
+```
+
+**Verify Wrangler version:**
+```bash
+npx wrangler --version
+# Should output: 4.51.0 or higher
+```
+
+If you have an older version, update it:
+```bash
+npm install -D wrangler@latest
+# or
+bun add -D wrangler@latest
 ```
 
 ### 2. D1 Database & KV
@@ -306,6 +320,29 @@ The `deploy` script automatically handles:
 
 ## Troubleshooting
 
+### Deployment Errors: "run_worker_first" Array Not Supported
+
+**Error:**
+```
+Error: Expected boolean but received array for run_worker_first
+```
+
+**Cause:** You're using Wrangler v3.x, which only supports `run_worker_first = true/false`. The array syntax `["/api/*", "/agents/*"]` requires Wrangler v4.20+.
+
+**Solution:**
+```bash
+# Check current version
+npx wrangler --version
+
+# Upgrade to v4.51.0 or later
+npm install -D wrangler@latest
+# or
+bun add -D wrangler@latest
+
+# Verify upgrade
+npx wrangler --version  # Should show 4.51.0+
+```
+
 ### WebSocket Connection Issues
 - Ensure worker is running on port 8787
 - Check browser console for CORS errors
@@ -320,6 +357,7 @@ The `deploy` script automatically handles:
 - Clear node_modules and reinstall
 - Check TypeScript version compatibility
 - Verify all imports are correct
+- Ensure `nodejs_compat` compatibility flag is set in wrangler.toml
 
 ## License
 
