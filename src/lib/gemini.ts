@@ -9,7 +9,8 @@ export function getGeminiClient(env: Env, model: string = "gemini-2.0-flash-exp"
   const genAI = new GoogleGenerativeAI(env.GOOGLE_AI_API_KEY);
 
   // Configure AI Gateway URL
-  const baseUrl = `https://gateway.ai.cloudflare.com/v1/${env.CLOUDFLARE_ACCOUNT_ID}/hdb-gateway/google-ai-studio/v1beta`;
+  const gatewayName = env.AI_GATEWAY_NAME || 'hdb-gateway';
+  const baseUrl = `https://gateway.ai.cloudflare.com/v1/${env.CLOUDFLARE_ACCOUNT_ID}/${gatewayName}/google-ai-studio/v1beta`;
 
   const generativeModel = genAI.getGenerativeModel(
     { model },
