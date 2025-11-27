@@ -1,0 +1,37 @@
+name = "hdb-autonomous-agent"
+main = "src/index.ts"
+compatibility_date = "2025-04-03"
+
+# Static Assets Configuration (for React SPA)
+[assets]
+directory = "./client/dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*", "/agents/*"]
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "hdb-stats-db"
+database_id = "D1_ID_PLACEHOLDER"
+
+# KV Namespace
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "KV_ID_PLACEHOLDER"
+
+# Durable Object Binding for Agent
+[[durable_objects.bindings]]
+name = "ADVISOR_AGENT"
+class_name = "AdvisorAgent"
+
+# Workflow Binding
+[[workflows]]
+name = "market-scan-workflow"
+binding = "MARKET_SCAN_WORKFLOW"
+class_name = "MarketScanWorkflow"
+
+# CRITICAL: Use new_sqlite_classes for SQLite storage backend on new DO classes
+# This enables the SQL API and state management features in the Agents SDK
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AdvisorAgent"]
