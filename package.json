@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"wrangler dev\" \"cd client && bun run dev\"",
-    "build": "cd client && bun run build",
+    "build": "cd client && bun install && bun run build",
     "deploy": "bun run build && bun run migrate:remote && wrangler deploy",
     "db:generate": "drizzle-kit generate",
     "migrate:local": "wrangler d1 migrations apply DB --local",
@@ -24,7 +24,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "wrangler": "^3.100.0",
+    "wrangler": "^4.51.0",
     "drizzle-kit": "^0.28.0",
     "@cloudflare/workers-types": "^4.20241127.0",
     "concurrently": "^9.1.0",

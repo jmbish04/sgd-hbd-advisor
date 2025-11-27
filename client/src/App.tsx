@@ -5,6 +5,7 @@ import Traceability from './components/Traceability';
 interface Message {
   role: string;
   content: string;
+  timestamp?: string;
 }
 
 type View = 'chat' | 'traceability';
@@ -47,16 +48,6 @@ function App() {
         console.error('Failed to parse WebSocket message:', error, event.data);
         setMessages(prev => [...prev, { role: 'error', content: 'Received an invalid message from the server.' }]);
       }
-
-      if (data.type === 'INIT') {
-        // Initialize with existing state
-        setMessages(data.state.messages || []);
-      } else if (data.type === 'RESPONSE') {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
-      } else if (data.type === 'ERROR') {
-        console.error('Agent error:', data.error);
-        setMessages(prev => [...prev, { role: 'error', content: `Error: ${data.error}` }]);
-      }
     };
 
     client.onclose = () => {
@@ -91,37 +82,39 @@ function App() {
     }
   };
 
-  if (currentView === 'traceability') {
-    return <Traceability />;
-  }
-
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Left: Chat */}
-      <div className="flex-1 flex flex-col p-4">
-        {/* Navigation */}
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => setCurrentView('chat')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              currentView === 'chat'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Chat
-          </button>
-          <button
-            onClick={() => setCurrentView('traceability')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              currentView === 'traceability'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            Traceability
-          </button>
-        </div>
+    <div className="flex flex-col h-screen bg-gray-50">
+      {/* Navigation */}
+      <div className="flex gap-2 p-4 bg-white border-b">
+        <button
+          onClick={() => setCurrentView('chat')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            currentView === 'chat'
+              ? 'bg-blue-500 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          Chat
+        </button>
+        <button
+          onClick={() => setCurrentView('traceability')}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            currentView === 'traceability'
+              ? 'bg-blue-500 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          Traceability
+        </button>
+      </div>
+
+      {/* Main Content */}
+      {currentView === 'traceability' ? (
+        <Traceability />
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left: Chat */}
+          <div className="flex-1 flex flex-col p-4">
         <div className="bg-white rounded-lg shadow-md p-4 mb-4">
           <h1 className="text-2xl font-bold text-gray-800">HDB Autonomous Advisor</h1>
           <div className="flex items-center gap-2 mt-2">
@@ -219,6 +212,8 @@ function App() {
           </div>
         </div>
       </div>
+        </div>
+      )}
     </div>
   );
 }
