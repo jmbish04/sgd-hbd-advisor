@@ -155,7 +155,7 @@ app.get('/api/observability/logs', async (c) => {
 
   try {
     const db = drizzle(c.env.DB);
-    const limit = parseInt(c.req.query('limit') || '100');
+    const limit = Math.min(parseInt(c.req.query('limit') || '100'), 1000);
     const level = c.req.query('level');
     const component = c.req.query('component');
 
