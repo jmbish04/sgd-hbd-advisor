@@ -1,12 +1,8 @@
-import { defineConfig } from 'drizzle-kit'
+import type { Config } from 'drizzle-kit';
 
-export default defineConfig({
-  schema: './worker/db/schema.ts',
+export default {
+  schema: './src/db/schema.ts',
   out: './migrations',
   dialect: 'sqlite',
-  driver: 'd1',
-  dbCredentials: {
-    wranglerConfigPath: './wrangler.jsonc',
-    dbName: 'gold_standard_db',
-  },
-})
+  driver: 'd1-http',
+} satisfies Config;

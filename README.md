@@ -1,213 +1,326 @@
-# Gold Standard Worker Template with MCP Server
+# HDB Autonomous Agent - Cloudflare Worker Monorepo
 
-A production-ready, modular, and AI-governed Cloudflare Worker template using a modern SPA + API architecture.
-
-**NEW:** Now includes a complete **Model Context Protocol (MCP)** server implementation for AI agent integration with Claude and other AI assistants!
-
-## Stack
-
-- **Build Tool:** Vite with `vite-plugin-cloudflare`
-- **Backend:** Hono (modular API with OpenAPI specs)
-- **Frontend:** React SPA with client-side routing
-- **Database:** D1 with Drizzle ORM + Kysely
-- **AI:** Vercel AI SDK with Workers AI / Gemini
-- **MCP Server:** Cloudflare Agents SDK with Zod validation
-- **UI:** shadcn/ui components with Tailwind CSS
-- **Styling:** Tailwind CSS with dark mode support
-- **TypeScript:** Strict mode with modern Cloudflare standards
-- **Real-time:** WebSocket support via Durable Objects
+A fully functional Cloudflare Worker monorepo featuring Agents SDK, Workflows, React frontend, and Google Gemini AI integration.
 
 ## Architecture
 
-This is a **hybrid SPA + API application**:
+### Backend
+- **Cloudflare Worker** with Hono framework
+- **Agents SDK** with Durable Objects and SQLite storage
+- **AdvisorAgent**: WebSocket-based chat with state management
+- **MarketScanWorkflow**: Automated market data processing
 
-- `/src` - React SPA (frontend)
-- `/worker` - Hono API (backend)
-- `vite-plugin-cloudflare` - Dev server with HMR and API proxying
+### AI Integration
+- **Google Gemini AI** with dynamic model selection
+- **Cloudflare AI Gateway** for routing and caching
+- Support for multiple models: `gemini-2.0-flash-exp`, `gemini-1.5-flash`, `gemini-1.5-pro`
 
-## Getting Started
+### Database
+- **D1 Database** for market snapshots
+- **Drizzle ORM** for type-safe schema management
+- Market data schema: town, flat_type, price, yield, created_at
 
-### Prerequisites
+### Frontend
+- **React** with Vite for fast development
+- **Tailwind CSS** for styling
+- **AgentClient** for real-time WebSocket communication
+- Admin panel for dynamic model configuration
 
-- Bun or Node.js 18+
-- Wrangler CLI
+## Project Structure
 
-### Installation
-
-```bash
-bun install
-# or
-npm install
+```
+sgd-hbd-advisor/
+├── src/
+│   ├── agent.ts              # AdvisorAgent (Durable Object)
+│   ├── workflow.ts           # MarketScanWorkflow
+│   ├── index.ts              # Worker entrypoint
+│   ├── types.ts              # Environment types
+│   ├── db/
+│   │   └── schema.ts         # Drizzle schema
+│   └── lib/
+│       └── gemini.ts         # Gemini AI client
+├── client/
+│   ├── src/
+│   │   ├── App.tsx           # Main React app
+│   │   ├── main.tsx          # React entry
+│   │   ├── index.css         # Tailwind styles
+│   │   └── lib/
+│   │       └── utils.ts      # Utility functions
+│   ├── index.html
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   └── package.json
+├── wrangler.toml             # Cloudflare configuration
+├── drizzle.config.ts         # Drizzle configuration
+├── package.json              # Root package.json
+└── tsconfig.json             # TypeScript config
 ```
 
-### Development
+## Setup Instructions
+
+### Prerequisites
+- **Bun** (recommended) or Node.js 18+
+- Cloudflare account with Workers enabled
+- Google AI API key
+
+### 1. Install Dependencies
+
+```bash
+# Install all dependencies (root + client)
+bun run setup
+```
+
+Or manually:
+```bash
+bun install
+cd client && bun install
+cd ..
+```
+
+### 2. D1 Database & KV
+
+The database and KV namespace are already configured in `wrangler.toml`:
+- D1 Database: `hbd-advisor` (ID: `781a9476-2cf0-43fc-94fc-742a16e39af5`)
+- KV Namespace: `KV` (ID: `80f8c30b48ad4112ba0b5d27e573f6eb`)
+
+### 3. Set Secrets
+
+```bash
+wrangler secret put CLOUDFLARE_ACCOUNT_ID
+wrangler secret put GOOGLE_AI_API_KEY
+```
+
+### 4. Generate and Apply Migrations
+
+```bash
+# Generate migrations from schema
+bun run db:generate
+
+# Apply locally for testing
+bun run migrate:local
+
+# Apply to remote (production)
+bun run migrate:remote
+```
+
+### 5. Run Locally
 
 ```bash
 bun run dev
-# or
-npm run dev
 ```
 
-### Build
+This will start:
+- Worker on `http://localhost:8787`
+- React dev server on `http://localhost:5173`
 
-```bash
-bun run build
-```
+### 6. Deploy to Cloudflare
 
-### Deploy
+The deploy script handles everything automatically:
 
 ```bash
 bun run deploy
 ```
 
-### Database Commands
+This will:
+1. Build the React client
+2. Apply migrations to remote D1 database
+3. Deploy the Worker to Cloudflare
+
+Perfect for CI/CD pipelines!
+
+## API Endpoints
+
+### Health Check
+```
+GET /api/health
+```
+
+### Admin Configuration
+```
+GET /api/admin/config
+POST /api/admin/config
+Body: { "model_smart": "gemini-2.0-flash-exp" }
+```
+
+### Workflow Management
+```
+POST /api/workflow/trigger
+GET /api/workflow/:id
+```
+
+### Agent WebSocket
+```
+WebSocket: /agents/advisor-agent/session-name
+```
+
+### Observability & Traceability
+```
+GET /api/observability/logs?limit=100&level=error&component=AdvisorAgent
+GET /api/observability/traces?limit=50&component=MarketScanWorkflow
+GET /api/observability/traces/:traceId/events
+GET /api/observability/stats
+```
+
+Access the **Traceability Dashboard** in the UI to view real-time logs, traces, and system statistics.
+
+## WebSocket Message Format
+
+### Client → Agent (Chat)
+```json
+{
+  "type": "CHAT",
+  "content": "Your message here"
+}
+```
+
+### Agent → Client (Response)
+```json
+{
+  "type": "RESPONSE",
+  "content": "AI response"
+}
+```
+
+### Agent → Client (Error)
+```json
+{
+  "type": "ERROR",
+  "error": "Error message"
+}
+```
+
+## Key Features
+
+### 1. SQLite-Backed Agents
+The AdvisorAgent uses SQLite storage for state persistence:
+- Automatic state sync across WebSocket connections
+- Conversation history stored in Durable Object
+- Dynamic model selection via KV
+
+### 2. AI Gateway Integration
+All Gemini API calls are routed through Cloudflare AI Gateway:
+- Caching for improved performance
+- Analytics and monitoring
+- Rate limiting and cost control
+
+### 3. Workflows
+MarketScanWorkflow demonstrates long-running processes:
+- Multi-step execution with automatic retries
+- State persistence across steps
+- Sleep/delay capabilities
+
+### 4. Modern Static Assets
+Uses Workers Static Assets configuration:
+- SPA routing with `not_found_handling`
+- Selective Worker routing with `run_worker_first`
+- Automatic asset serving
+
+### 5. Comprehensive Observability
+Full transparency with D1-backed logging and tracing:
+- **Traces Table**: Track every operation with status, duration, metadata
+- **Trace Events**: Detailed event logs with code locations
+- **Logs Table**: Application logs linked to traces
+- **Real-time Dashboard**: Shadcn UI dashboard for monitoring
+- **Code Location Tracking**: Know exactly where each log originated
+- **Performance Monitoring**: Track API call durations, workflow steps
+- **Error Tracing**: Link errors back to their originating trace
+
+## Configuration Notes
+
+### Critical Wrangler Settings
+
+```toml
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AdvisorAgent"]  # MUST use new_sqlite_classes, not new_classes
+```
+
+The `new_sqlite_classes` migration is required for Agents SDK SQLite storage. This cannot be added after initial deployment.
+
+### AI Gateway URL Format
+```
+https://gateway.ai.cloudflare.com/v1/{account_id}/hdb-gateway/google-ai-studio/v1beta
+```
+
+## Development Scripts
 
 ```bash
-bun run db:gen     # Generate migrations
-bun run db:push    # Push schema to D1
-bun run typegen    # Generate worker types
+# Development
+bun run dev              # Run worker + client concurrently
+bun run build            # Build React client
+bun run type-check       # TypeScript type checking
+
+# Database
+bun run db:generate      # Generate Drizzle migrations from schema
+bun run migrate:local    # Apply migrations to local D1 (--local)
+bun run migrate:remote   # Apply migrations to remote D1 (--remote)
+
+# Deployment (CI/CD Optimized)
+bun run deploy           # Build + Migrate + Deploy (all-in-one)
+
+# Setup
+bun run setup            # Install all dependencies (root + client)
+bun run client:install   # Install client dependencies only
+
+# Monitoring
+bun run cf:tail          # Tail Cloudflare Worker logs
+bun run cf:logs          # Tail logs with pretty formatting
 ```
 
-### Testing Commands
+## CI/CD Configuration
 
-```bash
-npm test           # Run all tests
-npm run test:ui    # Interactive UI mode
-npm run test:headed # Run with browser visible
-npm run test:debug # Debug with Playwright Inspector
-npm run test:report # View test report
-```
+### Cloudflare Dashboard CI/CD
 
-## Project Structure
+This project is optimized for Cloudflare's built-in CI/CD. To set up:
 
-```
-/
-├── src/                    # Frontend (React SPA)
-│   ├── main.tsx            # React entrypoint
-│   ├── App.tsx             # Main app with routing
-│   ├── pages/              # All pages
-│   │   ├── landing.tsx
-│   │   ├── dashboard.tsx
-│   │   ├── chat.tsx
-│   │   ├── health.tsx
-│   │   ├── login.tsx
-│   │   └── signup.tsx
-│   ├── components/ui/      # shadcn/ui components
-│   └── lib/utils.ts
-├── worker/                 # Backend (Hono API)
-│   ├── index.ts            # API entrypoint with MCP routing
-│   ├── db/
-│   │   ├── schema.ts       # Drizzle schema
-│   │   └── client.ts       # Hybrid ORM client
-│   ├── modules/            # Modular API routes
-│   │   ├── chat/
-│   │   ├── health/
-│   │   ├── dummyjson/
-│   │   ├── mcp/            # MCP server implementation
-│   │   │   ├── agent.ts    # MCP agent with tools
-│   │   │   ├── middleware.ts # Authentication
-│   │   │   └── index.ts
-│   │   └── ai/
-│   ├── do/                 # Durable Objects
-│   │   └── websocket.ts
-│   └── utils/
-│       └── openapi.ts
-├── tests/                  # Playwright E2E tests
-│   ├── AGENTS.md            # Testing agent guidelines
-│   ├── README.md            # Testing documentation
-│   ├── fixtures.ts          # Custom test fixtures
-│   ├── utils/               # Test utilities
-│   └── *.spec.ts            # Test suites
-├── docs/                   # Documentation
-│   └── testing-instructions.md
-├── index.html              # SPA entrypoint
-├── playwright.config.ts    # Playwright configuration
-├── vite.config.ts          # Vite configuration
-├── wrangler.jsonc          # Worker configuration
-├── drizzle.config.ts       # Drizzle configuration
-├── AGENTS.md               # AI governance rules
-└── README.md
-```
+1. **Push to GitHub**: Commit and push your code to a GitHub repository
+2. **Connect in Cloudflare Dashboard**:
+   - Navigate to Workers & Pages > Your Worker > Settings > Builds & Deployments
+   - Connect your GitHub repository
+   - Select the branch to deploy from (e.g., `main`)
+3. **Configure Build Settings**:
+   ```
+   Build command: bun run deploy
+   Build output directory: (leave empty - handled by wrangler)
+   Root directory: /
+   ```
+4. **Environment Variables**: Set in Dashboard under Settings > Variables and Secrets:
+   - `CLOUDFLARE_ACCOUNT_ID`
+   - `GOOGLE_AI_API_KEY`
 
-## Features
+The `deploy` script automatically handles:
+- ✅ Building the React client (`bun run build`)
+- ✅ Applying D1 migrations to remote (`bun run migrate:remote`)
+- ✅ Deploying the Worker (`wrangler deploy`)
 
-- ✅ **Modular API**: Hono backend with OpenAPI specs
-- ✅ **MCP Server**: Full Model Context Protocol server with example tools
-- ✅ **AI Integration**: Connect Claude and other AI agents to your Worker
-- ✅ **Dual Transport**: Support for both SSE and Streamable HTTP
-- ✅ **Generative Chat**: AI-powered chat UI using AI SDK
-- ✅ **Full-Stack Dev**: Blazing fast HMR with Vite
-- ✅ **Authentic Shadcn**: All core components pre-installed
-- ✅ **Hybrid ORM**: Drizzle + Kysely for type-safe queries
-- ✅ **Agent Governed**: AGENTS.md rulebook for AI development
-- ✅ **Health Dashboard**: Real-time monitoring with AI diagnostics
-- ✅ **WebSocket Support**: Real-time communication via Durable Objects
-- ✅ **OAuth Ready**: Built-in auth scaffolding for secure MCP access
-- ✅ **E2E Testing**: Comprehensive Playwright test suite with auto-managed dev servers
+**No additional configuration needed!** Every push to your selected branch will automatically build and deploy.
 
-## Configuration
+## Next Steps
 
-Before deploying, update `wrangler.jsonc` with your:
-- D1 Database ID
-- Gemini API Key (or OpenAI API Key)
+1. **Configure AI Gateway**: Set up gateway at Cloudflare dashboard
+2. **Add Authentication**: Implement user authentication for WebSocket connections
+3. **Real HDB Data**: Replace mock data with actual HDB API integration
+4. **Error Handling**: Add comprehensive error handling and logging
+5. **Testing**: Add unit and integration tests
+6. **Monitoring**: Set up Cloudflare analytics and alerts
 
-## MCP Server
+## Troubleshooting
 
-This Worker includes a complete **Model Context Protocol (MCP)** server implementation that allows AI agents like Claude to interact with your Worker's capabilities.
+### WebSocket Connection Issues
+- Ensure worker is running on port 8787
+- Check browser console for CORS errors
+- Verify agent name is kebab-case: `advisor-agent`
 
-### Quick Start
+### Database Migration Errors
+- Ensure D1 database is created
+- Check `database_id` in wrangler.toml
+- Run migrations with `--local` flag for local testing
 
-**MCP Endpoints:**
-- `/mcp` - Streamable HTTP transport (recommended)
-- `/sse` - Server-Sent Events transport (legacy)
+### Build Errors
+- Clear node_modules and reinstall
+- Check TypeScript version compatibility
+- Verify all imports are correct
 
-**Available Tools:**
-- `echo` - Test connectivity
-- `calculate` - Basic arithmetic
-- `healthCheck` - Worker status
-- `generateText` - AI text generation via Workers AI
-- `queryDatabase` - Read-only D1 database queries
+## License
 
-**Testing with MCP Inspector:**
-
-```bash
-npx @modelcontextprotocol/inspector
-# Connect to: http://localhost:5173/mcp
-```
-
-**Full Documentation:** See [MCP_SERVER.md](./MCP_SERVER.md) for comprehensive setup, authentication, and tool development guides.
-
-## Testing
-
-This template includes a comprehensive Playwright testing suite with automatic dev server management.
-
-### Running Tests
-
-```bash
-npm test              # Run all tests
-npm run test:ui       # Interactive UI mode (recommended)
-npm run test:headed   # Run with browser visible
-npm run test:debug    # Debug with Playwright Inspector
-npm run test:report   # View HTML report
-```
-
-### Test Documentation
-
-- **[tests/README.md](./tests/README.md)** - Setup, running tests, debugging
-- **[tests/AGENTS.md](./tests/AGENTS.md)** - Agent guidelines for maintaining tests
-- **[docs/testing-instructions.md](./docs/testing-instructions.md)** - Quick reference
-
-### Test Coverage
-
-The test suite includes:
-- Basic functionality and page loading
-- Navigation across all routes
-- Health dashboard and monitoring
-- API endpoint testing
-- User interactions and form submissions
-
-**Note:** When adding new pages, you must add corresponding tests. See [tests/AGENTS.md](./tests/AGENTS.md) for guidelines.
-
-## Development Guidelines
-
-See [AGENTS.md](./AGENTS.md) for AI agent governance rules and development patterns.
+MIT
