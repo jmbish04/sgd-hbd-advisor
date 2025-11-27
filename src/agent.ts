@@ -138,7 +138,7 @@ export class AdvisorAgent extends Agent<Env, ChatState> {
           });
 
           const configStr = await this.env.KV.get("system_config");
-          const config = configStr ? JSON.parse(configStr) : {};
+          const config = configStr ? (()=>{ try { return JSON.parse(configStr) } catch(e) { console.error('Failed to parse system_config from KV', e); return {}; } })() : {};
           const modelName = config.model_smart || "gemini-2.0-flash-exp";
 
           await logger.logEvent({
