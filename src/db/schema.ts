@@ -5,7 +5,7 @@ export const marketSnapshots = sqliteTable('market_snapshots', {
   town: text('town').notNull(),
   flatType: text('flat_type').notNull(),
   price: integer('price').notNull(),
-  yieldRate: integer('yield').notNull(),
+  yieldRate: integer('yield_rate').notNull(),
   createdAt: text('created_at').notNull(),
 });
 
