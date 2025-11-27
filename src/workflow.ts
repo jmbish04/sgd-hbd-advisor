@@ -165,9 +165,8 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
 
       await step.do('save-snapshot', async () => {
         await this.env.DB.prepare(
-          `INSERT INTO market_snapshots (town, flat_type, price, yield, created_at)
+          `INSERT INTO market_snapshots (town, flat_type, price, \`yield\`, created_at)
            VALUES (?, ?, ?, ?, ?)`
-        ).bind(
           marketData.town,
           marketData.flat_type,
           marketData.price,
