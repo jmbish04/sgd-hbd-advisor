@@ -52,7 +52,7 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
 
       const config = await step.do('fetch-config', async () => {
         const configStr = await this.env.KV.get("system_config");
-        const parsedConfig = configStr ? JSON.parse(configStr) : { model_fast: "gemini-2.0-flash-exp" };
+        const parsedConfig = configStr ? (()=>{ try { return JSON.parse(configStr) } catch(e) { console.error('Failed to parse system_config from KV, using default', e); return {}; } })() : { model_fast: "gemini-2.0-flash-exp" };
 
         await logger.logEvent({
           traceId,
