@@ -91,7 +91,7 @@ export class Logger {
             status,
             endTime: now,
             duration,
-            metadata: metadata ? JSON.stringify({ ...JSON.parse(trace.metadata || '{}'), ...metadata }) : trace.metadata,
+            metadata: metadata ? JSON.stringify({ ...(() => { try { return JSON.parse(trace.metadata || '{}') } catch { return {} } })(), ...metadata }) : trace.metadata,
           })
           .where(traces.id, id);
 
