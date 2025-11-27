@@ -1,0 +1,67 @@
+{
+  "name": "gold-standard-worker",
+  "main": "worker/index.ts", // API Worker entrypoint
+  "compatibility_date": "2024-07-25",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Vite-plugin-cloudflare uses this during `vite build`
+  "build": {
+    "command": "bun run build",
+    "watch_dir": "src" // Watch the SPA for changes
+  },
+
+  // Serve the Vite SPA (built to './dist') as the static site
+  "site": {
+    "bucket": "./dist"
+  },
+
+  // Bindings for the API Worker
+  "ai": {
+    "binding": "AI" // Workers AI
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gold_standard_db",
+      "database_id": "YOUR_D1_DATABASE_ID_HERE", // Must be created manually first
+      "migrations_dir": "./migrations"
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "WS_HANDLER",
+        "class_name": "WebSocketServer"
+      },
+      {
+        "name": "MCP_AGENT",
+        "class_name": "CloudflareMcpAgent"
+      }
+    ]
+  },
+
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["WebSocketServer"]
+    },
+    {
+      "tag": "v2",
+      "new_classes": ["CloudflareMcpAgent"]
+    }
+  ],
+
+  "vars": {
+    // API keys for AI SDK
+    "GEMINI_API_KEY": "YOUR_GEMINI_API_KEY_HERE"
+    // "OPENAI_API_KEY": "YOUR_OPENAI_API_KEY_HERE"
+
+    // MCP Authentication Settings (optional)
+    // "MCP_AUTH_ENABLED": "false",
+    // "MCP_API_KEYS": "your-api-key-1,your-api-key-2",
+    // "CLOUDFLARE_ACCESS_TEAM_DOMAIN": "your-team.cloudflareaccess.com",
+    // "CLOUDFLARE_ACCESS_AUDIENCE": "your-audience-tag"
+  }
+}

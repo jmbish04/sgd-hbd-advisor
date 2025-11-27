@@ -1,0 +1,19 @@
+# Development Environment Variables
+# Copy this file to .dev.vars for local development
+
+# Gemini API Key (optional, for AI features)
+GEMINI_API_KEY=your-gemini-api-key-here
+
+# OpenAI API Key (optional, alternative to Gemini)
+# OPENAI_API_KEY=your-openai-api-key-here
+
+# MCP Authentication (optional)
+# Set to "true" to enable authentication
+MCP_AUTH_ENABLED=false
+
+# Comma-separated list of valid API keys for MCP access
+# MCP_API_KEYS=dev-key-1,dev-key-2
+
+# Cloudflare Access Configuration (optional)
+# CLOUDFLARE_ACCESS_TEAM_DOMAIN=your-team.cloudflareaccess.com
+# CLOUDFLARE_ACCESS_AUDIENCE=your-audience-tag
