@@ -49,7 +49,7 @@ export class AdvisorAgent extends Agent<Env, ChatState> {
       metadata: {
         agentName: this.name,
         userAgent: ctx.request.headers.get('user-agent'),
-        codeLocation: 'agent.ts:onConnect:38'
+        codeLocation: 'AdvisorAgent.onConnect'
       }
     });
 
