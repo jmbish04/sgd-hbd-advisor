@@ -1,8 +1,9 @@
 {
-  "name": "gold-standard-worker",
+  "name": "sgd-hbd-advisor",
   "main": "worker/index.ts", // API Worker entrypoint
   "compatibility_date": "2024-07-25",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
 
   // Vite-plugin-cloudflare uses this during `vite build`
   "build": {
@@ -23,9 +24,16 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "gold_standard_db",
-      "database_id": "YOUR_D1_DATABASE_ID_HERE", // Must be created manually first
+      "database_name": "hbd-advisor",
+      "database_id": "781a9476-2cf0-43fc-94fc-742a16e39af5",
       "migrations_dir": "./migrations"
+    }
+  ],
+
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "80f8c30b48ad4112ba0b5d27e573f6eb"
     }
   ],
 
