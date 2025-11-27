@@ -151,6 +151,3 @@ wrangler.toml.local
 
 # Client build
 client/dist
-
-# Migrations
-migrations
