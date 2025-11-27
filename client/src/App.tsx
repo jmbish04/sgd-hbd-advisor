@@ -140,7 +140,7 @@ function App() {
           ) : (
             messages.map((msg, i) => (
               <div
-                key={i}
+                key={msg.timestamp ? `${msg.timestamp}-${i}` : i}
                 className={`p-3 rounded-lg max-w-[80%] ${
                   msg.role === 'user'
                     ? 'bg-blue-500 text-white ml-auto'
