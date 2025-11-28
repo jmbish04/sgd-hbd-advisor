@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader, Spinner } from "@heroui/react";
+import { Card, CardBody, CardHeader, Spinner, Chip } from "@heroui/react";
 import { useState, useEffect } from "react";
 
 export default function AiNarrativeCard() {
