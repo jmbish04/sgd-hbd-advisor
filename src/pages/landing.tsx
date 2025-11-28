@@ -1,12 +1,10 @@
-import { Card, Spacer } from "@heroui/react";
-import Placeholder from "../components/Placeholder";
-
-// Eventually replace these imports with real components
-const MehMap = () => <Placeholder title="Interactive HDB Map" />;
-const KeyMetricsCard = () => <Placeholder title="Key Market Metrics" />;
-const AiNarrativeCard = () => <Placeholder title="AI Market Narrative" />;
-const ZonePotentialChart = () => <Placeholder title="Zone Potential Analysis" />;
-const RentalYieldTrendChart = () => <Placeholder title="Rental Yield Trends" />;
+import { Card } from "@heroui/react";
+import MehMap from "../components/Map/MehMap";
+import KeyMetricsCard from "../components/Insights/KeyMetricsCard";
+import MehSummaryCard from "../components/Insights/MehSummaryCard";
+import AiNarrativeCard from "../components/Insights/AiNarrativeCard";
+import ZonePotentialChart from "../components/Charts/ZonePotentialChart";
+import RentalYieldTrendChart from "../components/Charts/RentalYieldTrendChart";
 
 export function Landing() {
   return (
@@ -32,12 +30,7 @@ export function Landing() {
         {/* Metrics Side Panel */}
         <div className="col-span-12 md:col-span-4 flex flex-col gap-4">
           <KeyMetricsCard />
-          <Card className="p-4">
-            <h3 className="font-semibold mb-2">Quick Stats</h3>
-            <div className="text-sm text-gray-500">
-              Wait for data ingestion...
-            </div>
-          </Card>
+          <MehSummaryCard />
         </div>
       </div>
 

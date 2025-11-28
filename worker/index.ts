@@ -3,6 +3,7 @@ import { handle } from 'hono/cloudflare-workers'
 import { chatApi } from '@api/modules/chat'
 import { healthApi } from '@api/modules/health'
 import { productsApi } from '@api/modules/dummyjson'
+import { fxApi } from '@api/modules/fx'
 import { createOpenApiSpec } from '@api/utils/openapi'
 import { WebSocketServer } from '@api/do/websocket'
 import { mcpAgent } from '@api/modules/mcp'
@@ -24,6 +25,7 @@ type Env = {
   WS_HANDLER: DurableObjectNamespace<WebSocketServer>
   GEMINI_API_KEY: string
   ASSETS: Fetcher
+  KV_CACHE: KVNamespace
   // MCP authentication settings (optional)
   // Enable these in wrangler.toml for production
   MCP_AUTH_ENABLED?: string
@@ -45,6 +47,7 @@ const app = new OpenAPIHono<{ Bindings: Env }>()
 app.route('/api/chat', chatApi)
 app.route('/api/health', healthApi)
 app.route('/api/products', productsApi)
+app.route('/api/fx', fxApi)
 
 /**
  * WebSocket Endpoint

@@ -6,8 +6,9 @@ import { Health } from '@/pages/health'
 import { Landing } from '@/pages/landing'
 import { Login } from '@/pages/login'
 import { Signup } from '@/pages/signup'
+import AdminConfig from '@/pages/AdminConfig'
 
-export type Page = 'home' | 'dashboard' | 'chat' | 'health' | 'login' | 'signup'
+export type Page = 'home' | 'dashboard' | 'chat' | 'health' | 'admin' | 'login' | 'signup'
 
 export default function App() {
   const [page, setPage] = useState<Page>('home')
@@ -15,19 +16,21 @@ export default function App() {
   const renderPage = () => {
     switch (page) {
       case 'home':
-        return <Landing onStart={() => setPage('dashboard')} />
+        return <Landing />
       case 'dashboard':
         return <Dashboard />
       case 'chat':
         return <Chat />
       case 'health':
         return <Health />
+      case 'admin':
+        return <AdminConfig />
       case 'login':
         return <Login onSignupClick={() => setPage('signup')} />
       case 'signup':
         return <Signup onLoginClick={() => setPage('login')} />
       default:
-        return <Landing onStart={() => setPage('dashboard')} />
+        return <Landing />
     }
   }
 
