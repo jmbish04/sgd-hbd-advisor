@@ -51,7 +51,7 @@ chatApi.openapi(chatSchema, async (c) => {
   })
 
   const result = await streamText({
-    model: google('models/gemini-1.5-flash-latest'),
+    model: google('models/gemini-2.0-flash'),
     messages,
   })
 
