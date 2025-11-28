@@ -4,13 +4,16 @@ import { drizzle } from 'drizzle-orm/d1';
 import { desc, eq, sql } from 'drizzle-orm';
 import { AdvisorAgent } from './agent';
 import { MarketScanWorkflow } from './workflow';
+import { WebSocketServer } from './do/websocket';
 import { Logger } from './lib/logger';
 import { logs, traces, traceEvents } from './db/schema';
 
 interface Env {
   ADVISOR_AGENT: DurableObjectNamespace<AdvisorAgent>;
+  WS_HANDLER: DurableObjectNamespace<WebSocketServer>;
   MARKET_SCAN_WORKFLOW: Workflow;
   KV: KVNamespace;
+  KV_CACHE: KVNamespace;
   DB: D1Database;
   CLOUDFLARE_ACCOUNT_ID: string;
   GOOGLE_AI_API_KEY: string;
@@ -307,6 +310,18 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
+    // WebSocket endpoint for real-time chat
+    if (url.pathname === '/api/ws') {
+      const upgradeHeader = request.headers.get('Upgrade');
+      if (upgradeHeader !== 'websocket') {
+        return new Response('Expected WebSocket upgrade', { status: 426 });
+      }
+      // Route to WebSocket Durable Object
+      const id = env.WS_HANDLER.idFromName('default-room');
+      const stub = env.WS_HANDLER.get(id);
+      return stub.fetch(request);
+    }
+
     // Route WebSocket connections to Agent
     // Uses URL pattern: /agents/:agent/:name
     // e.g., /agents/advisor-agent/user-123
@@ -337,4 +352,4 @@ export default {
 };
 
 // Export classes for Durable Objects and Workflows
-export { AdvisorAgent, MarketScanWorkflow };
+export { AdvisorAgent, MarketScanWorkflow, WebSocketServer };
