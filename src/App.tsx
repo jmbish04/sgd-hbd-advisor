@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { MainLayout } from '@/pages/_layout'
 import { Dashboard } from '@/pages/dashboard'
-import { Chat } from '@/pages/chat'
+import AgentChat from '@/pages/AgentChat'
 import { Health } from '@/pages/health'
 import { Landing } from '@/pages/landing'
 import { Login } from '@/pages/login'
@@ -20,7 +20,7 @@ export default function App() {
       case 'dashboard':
         return <Dashboard />
       case 'chat':
-        return <Chat />
+        return <AgentChat />
       case 'health':
         return <Health />
       case 'admin':
