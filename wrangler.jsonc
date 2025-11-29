@@ -1,0 +1,56 @@
+{
+  "name": "sgd-hbd-advisor",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-04-03",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./client/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/agents/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hbd-advisor",
+      "database_id": "781a9476-2cf0-43fc-94fc-742a16e39af5",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "80f8c30b48ad4112ba0b5d27e573f6eb"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "ADVISOR_AGENT",
+        "class_name": "AdvisorAgent"
+      },
+      {
+        "name": "WS_HANDLER",
+        "class_name": "WebSocketServer"
+      }
+    ]
+  },
+  "workflows": [
+    {
+      "name": "market-scan-workflow",
+      "binding": "MARKET_SCAN_WORKFLOW",
+      "class_name": "MarketScanWorkflow"
+    }
+  ],
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["AdvisorAgent", "WebSocketServer"]
+    }
+  ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS_ENGINE",
+      "dataset": "production_logs"
+    }
+  ]
+}
