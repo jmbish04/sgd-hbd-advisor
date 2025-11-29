@@ -56,7 +56,7 @@ export default function Traceability() {
   const fetchLogs = async () => {
     try {
       const response = await fetch('/api/observability/logs?limit=100');
-      const data = await response.json();
+      const { data }: { data: any } = useSWR(
       setLogs(data.logs || []);
     } catch (error) {
       console.error('Failed to fetch logs:', error);
@@ -66,7 +66,7 @@ export default function Traceability() {
   const fetchTraces = async () => {
     try {
       const response = await fetch('/api/observability/traces?limit=50');
-      const data = await response.json();
+      const { data }: { data: any } = useSWR(
       setTraces(data.traces || []);
     } catch (error) {
       console.error('Failed to fetch traces:', error);
@@ -77,7 +77,7 @@ export default function Traceability() {
     try {
       setLoading(true);
       const response = await fetch(`/api/observability/traces/${traceId}/events`);
-      const data = await response.json();
+      const { data }: { data: any } = useSWR(
       setTraceEvents(data.events || []);
     } catch (error) {
       console.error('Failed to fetch trace events:', error);
@@ -89,7 +89,7 @@ export default function Traceability() {
   const fetchStats = async () => {
     try {
       const response = await fetch('/api/observability/stats');
-      const data = await response.json();
+      const { data }: { data: any } = useSWR(
       setStats(data.stats);
     } catch (error) {
       console.error('Failed to fetch stats:', error);

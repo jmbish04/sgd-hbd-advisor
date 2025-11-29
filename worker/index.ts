@@ -181,8 +181,8 @@ export default {
   async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
     console.log(`Cron trigger received: ${controller.cron}`);
     
-    // Get a handle to the workflow
-    const workflow = MarketScanWorkflow.get(env);
+    // Instantiate the workflow
+    const workflow = new MarketScanWorkflow(env);
 
     // Start the workflow with a unique ID based on the scheduled time
     await workflow.start(`market-scan-${controller.scheduledTime}`, {
