@@ -50,14 +50,10 @@
   "analytics_engine_datasets": [
     {
       "binding": "ANALYTICS_ENGINE",
-      "dataset": "production_logs"
+      "dataset": "sgd-hbd-advisor"
     }
-  ]
-},
-  "analytics_engine_datasets": [
-    {
-      "binding": "ANALYTICS_ENGINE",
-      "dataset": "production_logs"
-    }
-  ]
+  ],
+  "triggers": {
+    "crons": ["0 */6 * * *"]
+  }
 }

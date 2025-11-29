@@ -167,6 +167,31 @@ export default {
     // - SPA: React application with client-side routing
     return app.fetch(request, env, ctx)
   },
+
+  /**
+   * Scheduled event handler for Cron Triggers.
+   *
+   * This function is executed based on the cron schedule defined in `wrangler.jsonc`.
+   * It starts the `MarketScanWorkflow` to periodically fetch and analyze market data.
+   *
+   * @param controller - The scheduled controller containing event details.
+   * @param env - The worker environment bindings.
+   * @param ctx - The execution context.
+   */
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    console.log(`Cron trigger received: ${controller.cron}`);
+    
+    // Get a handle to the workflow
+    const workflow = MarketScanWorkflow.get(env);
+
+    // Start the workflow with a unique ID based on the scheduled time
+    await workflow.start(`market-scan-${controller.scheduledTime}`, {
+      triggerType: 'cron',
+      metadata: { cron: controller.cron }
+    });
+
+    console.log(`Started MarketScanWorkflow with ID: market-scan-${controller.scheduledTime}`);
+  }
 }
 
 // ============================================================================

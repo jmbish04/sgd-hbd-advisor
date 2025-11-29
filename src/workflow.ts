@@ -6,6 +6,7 @@ interface Env {
   KV: KVNamespace;
   DB: D1Database;
   GEMINI_API_KEY: string;
+  SGDATA_KEY: string; // For Singapore Open Data API
   ANALYTICS_ENGINE?: AnalyticsEngine;
 }
 
@@ -45,52 +46,39 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
 
     try {
       // Step 1: Fetch config
-      await logger.logEvent({
-        traceId,
-        level: 'info',
-        component: 'MarketScanWorkflow',
-        action: 'start_fetch_config',
-        message: 'Starting config fetch step',
-        codeLocation: 'workflow.ts:run:44'
-      });
-
       const config = await step.do('fetch-config', async () => {
         const configStr = await this.env.KV.get("system_config");
-        const parsedConfig = configStr ? (()=>{ try { return JSON.parse(configStr) } catch(e) { console.error('Failed to parse system_config from KV, using default', e); return {}; } })() : { model_fast: "gemini-1.5-flash" };
+        return configStr ? JSON.parse(configStr) : { model_fast: "gemini-1.5-flash" };
+      });
 
-        await logger.logEvent({
-          traceId,
-          level: 'info',
-          component: 'MarketScanWorkflow',
-          action: 'config_fetched',
-          message: 'Configuration fetched from KV',
-          data: {
-            hasConfig: !!configStr,
-            model: parsedConfig.model_fast
-          },
-          codeLocation: 'workflow.ts:run:54'
+      // Step 2: Fetch market data from API
+      const marketData = await step.do('fetch-market-data', async () => {
+        if (!this.env.SGDATA_KEY) {
+          await logger.error('SGDATA_KEY is not configured', { component: 'MarketScanWorkflow', traceId });
+          throw new Error('SGDATA_KEY secret is not available.');
+        }
+        
+        // NOTE: This is a placeholder endpoint. Replace with the actual resource ID.
+        const API_ENDPOINT = 'https://data.gov.sg/api/action/datastore_search?resource_id=f1765b54-a209-4718-8d38-a39237f502b3&limit=5';
+
+        const response = await fetch(API_ENDPOINT, {
+          headers: { 'Authorization': this.env.SGDATA_KEY },
         });
 
-        return parsedConfig;
-      });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch market data: ${response.status} ${errorText}`);
+        }
 
-      // Step 2: Fetch market data (mocked)
-      await logger.logEvent({
-        traceId,
-        level: 'info',
-        component: 'MarketScanWorkflow',
-        action: 'start_fetch_market_data',
-        message: 'Starting market data fetch step',
-        codeLocation: 'workflow.ts:run:69'
-      });
-
-      const marketData = await step.do('fetch-market-data', async () => {
-        // In production, fetch real HDB data
-        const data = {
-          town: "Tampines",
-          flat_type: "4-Room",
-          price: 550000,
-          yield: 3.2
+        const data = await response.json() as any;
+        
+        // NOTE: Adapt this to the actual response structure.
+        const record = data?.result?.records[0];
+        const transformedData = {
+          town: record?.town || "Unknown",
+          flat_type: record?.flat_type || "Unknown",
+          price: parseFloat(record?.resale_price) || 0,
+          yield: 0, // Placeholder
         };
 
         await logger.logEvent({
@@ -98,68 +86,26 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
           level: 'info',
           component: 'MarketScanWorkflow',
           action: 'market_data_fetched',
-          message: 'Market data fetched (mocked)',
-          data,
-          codeLocation: 'workflow.ts:run:83'
+          message: 'Market data fetched from Data.gov.sg',
+          data: transformedData
         });
 
-        return data;
+        return transformedData;
       });
 
       // Step 3: AI Analysis
-      await logger.logEvent({
-        traceId,
-        level: 'info',
-        component: 'MarketScanWorkflow',
-        action: 'start_ai_analysis',
-        message: `Starting AI analysis with model ${config.model_fast}`,
-        data: {
-          model: config.model_fast,
-          marketData
-        },
-        codeLocation: 'workflow.ts:run:100'
-      });
-
       const analysis = await step.do('ai-analysis', async () => {
-        const startTime = Date.now();
         const { getModel } = getGeminiClient(this.env);
         const model = getModel(config.model_fast);
         const prompt = `Analyze this HDB market data: ${JSON.stringify(marketData)}`;
         const result = await model.generateContent(prompt);
-        const analysisText = result.response.text();
-        const duration = Date.now() - startTime;
-
-        await logger.logEvent({
-          traceId,
-          level: 'info',
-          component: 'MarketScanWorkflow',
-          action: 'ai_analysis_complete',
-          message: `AI analysis completed in ${duration}ms`,
-          data: {
-            duration,
-            analysisLength: analysisText.length,
-            model: config.model_fast
-          },
-          codeLocation: 'workflow.ts:run:132'
-        });
-
-        return analysisText;
+        return result.response.text();
       });
 
       // Step 4: Save to D1
-      await logger.logEvent({
-        traceId,
-        level: 'info',
-        component: 'MarketScanWorkflow',
-        action: 'start_save_snapshot',
-        message: 'Starting D1 save operation',
-        codeLocation: 'workflow.ts:run:145'
-      });
-
       await step.do('save-snapshot', async () => {
-        await this.env.DB.prepare(
-          `INSERT INTO market_snapshots (town, flat_type, price, \`yield\`, created_at)
-           VALUES (?, ?, ?, ?, ?)`
+        return this.env.DB.prepare(
+          `INSERT INTO market_snapshots (town, flat_type, price, \`yield\`, created_at) VALUES (?, ?, ?, ?, ?)`
         ).bind(
           marketData.town,
           marketData.flat_type,
@@ -167,72 +113,14 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
           marketData.yield,
           new Date().toISOString()
         ).run();
-
-        await logger.logEvent({
-          traceId,
-          level: 'info',
-          component: 'MarketScanWorkflow',
-          action: 'snapshot_saved',
-          message: 'Market snapshot saved to D1',
-          data: marketData,
-          codeLocation: 'workflow.ts:run:166'
-        });
-
-        return { saved: true };
       });
 
-      // Optional: Wait before next step
-      await logger.logEvent({
-        traceId,
-        level: 'debug',
-        component: 'MarketScanWorkflow',
-        action: 'start_cooldown',
-        message: 'Starting cooldown period (1 minute)',
-        codeLocation: 'workflow.ts:run:179'
-      });
-
-      await step.sleep('cooldown', '1 minute');
-
-      await logger.logEvent({
-        traceId,
-        level: 'debug',
-        component: 'MarketScanWorkflow',
-        action: 'cooldown_complete',
-        message: 'Cooldown period complete',
-        codeLocation: 'workflow.ts:run:189'
-      });
-
-      // Mark workflow as successful
-      await logger.endTrace(workflowTraceId, 'success', {
-        analysis: analysis.substring(0, 100),
-        marketData
-      });
-
-      await logger.info('Workflow completed successfully', {
-        component: 'MarketScanWorkflow',
-        traceId,
-        metadata: {
-          workflowId: this.name,
-          codeLocation: 'workflow.ts:run:202'
-        }
-      });
-
-      // Return result (available via instance.status())
+      await logger.endTrace(workflowTraceId, 'success', { analysis: analysis.substring(0, 100) });
       return { analysis, marketData };
+
     } catch (error) {
-      await logger.endTrace(workflowTraceId, 'error', {
-        error: error instanceof Error ? error.message : String(error)
-      });
-
-      await logger.error('Workflow failed', {
-        component: 'MarketScanWorkflow',
-        traceId,
-        metadata: {
-          workflowId: this.name,
-          codeLocation: 'workflow.ts:run:218'
-        }
-      }, error as Error);
-
+      await logger.endTrace(workflowTraceId, 'error', { error: error instanceof Error ? error.message : String(error) });
+      await logger.error('Workflow failed', { component: 'MarketScanWorkflow', traceId }, error as Error);
       throw error;
     }
   }
