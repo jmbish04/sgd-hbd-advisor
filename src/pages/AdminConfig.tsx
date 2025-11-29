@@ -29,7 +29,7 @@ export default function AdminConfig() {
             type="password"
             placeholder="Enter your API key"
             value={config.sgdataKey}
-            onChange={(e) => setConfig({ ...config, sgdataKey: e.target.value })}
+            onChange={(e) => setConfig(prev => ({ ...prev, sgdataKey: e.target.value }))}
             description="Your Singapore Data API key for HDB data access"
           />
 
