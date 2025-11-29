@@ -1,5 +1,5 @@
 import { Agent } from "agents";
-import { getGeminiClient } from "./lib/gemini";
+import { callGeminiApi } from "./lib/gemini";
 import { Logger, withTrace } from "./lib/logger";
 
 interface Env {
@@ -192,10 +192,10 @@ export class AdvisorAgent extends Agent<Env, ChatState> {
           });
 
           const startTime = Date.now();
-          const { ai } = getGeminiClient(this.env, modelName);
-          const result = await ai.generateContent(data.content);
-          const response = result.response;
-          const responseText = response.text();
+          const geminiResponse = await callGeminiApi(this.env, modelName, data.content);
+          // Assuming the response has a structure like { candidates: [{ content: { parts: [{ text: "..." }] } }] }
+          // This can be fragile; robust parsing is recommended.
+          const responseText = geminiResponse.candidates[0]?.content?.parts[0]?.text || "Sorry, I couldn't process that.";
           const duration = Date.now() - startTime;
 
           await logger.logEvent({

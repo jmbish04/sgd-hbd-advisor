@@ -1,5 +1,5 @@
 import { WorkflowEntrypoint, WorkflowStep, WorkflowEvent } from 'cloudflare:workers';
-import { getGeminiClient } from './lib/gemini';
+import { callGeminiApi } from './lib/gemini';
 import { Logger } from './lib/logger';
 
 interface Env {
@@ -118,22 +118,9 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
 
       const analysis = await step.do('ai-analysis', async () => {
         const startTime = Date.now();
-        const { ai } = getGeminiClient(this.env, config.model_fast);
-
-        await logger.logEvent({
-          traceId,
-          level: 'debug',
-          component: 'MarketScanWorkflow',
-          action: 'call_gemini',
-          message: 'Calling Gemini for market analysis',
-          data: { model: config.model_fast },
-          codeLocation: 'workflow.ts:run:113'
-        });
-
-        const result = await ai.generateContent(
-          `Analyze this HDB market data: ${JSON.stringify(marketData)}`
-        );
-        const analysisText = result.response.text();
+        const prompt = `Analyze this HDB market data: ${JSON.stringify(marketData)}`;
+        const geminiResponse = await callGeminiApi(this.env, config.model_fast, prompt);
+        const analysisText = geminiResponse.candidates[0]?.content?.parts[0]?.text || "Analysis could not be generated.";
         const duration = Date.now() - startTime;
 
         await logger.logEvent({
