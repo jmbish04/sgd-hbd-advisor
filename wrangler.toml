@@ -8,10 +8,13 @@ compatibility_flags = ["nodejs_compat"]
 command = "npm run build"
 
 # Static Assets Configuration (for React SPA)
+# CRITICAL: run_worker_first = true ensures Worker has full routing control
+# This prevents asset server from intercepting WebSocket upgrades
 [assets]
 directory = "./client/dist"
+binding = "ASSETS"
 not_found_handling = "single-page-application"
-run_worker_first = ["/api/*", "/agents/*"]
+run_worker_first = true
 
 # D1 Database
 [[d1_databases]]
@@ -19,9 +22,9 @@ binding = "DB"
 database_name = "hbd-advisor"
 database_id = "781a9476-2cf0-43fc-94fc-742a16e39af5"
 
-# KV Namespace
+# KV Namespace for caching (FX rates, etc.)
 [[kv_namespaces]]
-binding = "KV"
+binding = "KV_CACHE"
 id = "80f8c30b48ad4112ba0b5d27e573f6eb"
 
 # Durable Object Binding for Agent
@@ -29,7 +32,7 @@ id = "80f8c30b48ad4112ba0b5d27e573f6eb"
 name = "ADVISOR_AGENT"
 class_name = "AdvisorAgent"
 
-# Durable Object Binding for WebSocket Handler
+# Durable Object Binding for WebSocket Server
 [[durable_objects.bindings]]
 name = "WS_HANDLER"
 class_name = "WebSocketServer"
@@ -39,6 +42,14 @@ class_name = "WebSocketServer"
 name = "market-scan-workflow"
 binding = "MARKET_SCAN_WORKFLOW"
 class_name = "MarketScanWorkflow"
+
+# AI Binding
+[ai]
+binding = "AI"
+
+# Observability (Workers Logs)
+[observability]
+enabled = true
 
 # CRITICAL: Use new_sqlite_classes for SQLite storage backend on new DO classes
 # This enables the SQL API and state management features in the Agents SDK
