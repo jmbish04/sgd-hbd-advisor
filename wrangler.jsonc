@@ -53,4 +53,11 @@
       "dataset": "production_logs"
     }
   ]
+},
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS_ENGINE",
+      "dataset": "production_logs"
+    }
+  ]
 }

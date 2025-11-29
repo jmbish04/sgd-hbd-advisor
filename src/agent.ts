@@ -6,6 +6,7 @@ interface Env {
   DB: D1Database;
   KV: KVNamespace;
   GEMINI_API_KEY: string;
+  ANALYTICS_ENGINE?: AnalyticsEngine;
 }
 
 interface ChatMessage {
@@ -17,6 +18,10 @@ interface ChatMessage {
 interface ChatState {
   messages: ChatMessage[];
   model: string;
+}
+
+interface AnalyticsEngine {
+  writeDataPoint(event: unknown): void;
 }
 
 export class AdvisorAgent extends Agent<Env, ChatState> {
@@ -31,7 +36,7 @@ export class AdvisorAgent extends Agent<Env, ChatState> {
   // Initialize logger
   private getLogger(): Logger {
     if (!this.logger) {
-      this.logger = new Logger(this.env.DB);
+      this.logger = new Logger(this.env.DB, this.env.ANALYTICS_ENGINE);
     }
     return this.logger;
   }

@@ -6,6 +6,11 @@ interface Env {
   KV: KVNamespace;
   DB: D1Database;
   GEMINI_API_KEY: string;
+  ANALYTICS_ENGINE?: AnalyticsEngine;
+}
+
+interface AnalyticsEngine {
+  writeDataPoint(event: unknown): void;
 }
 
 interface Params {
@@ -15,7 +20,7 @@ interface Params {
 
 export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
   async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
-    const logger = new Logger(this.env.DB);
+    const logger = new Logger(this.env.DB, this.env.ANALYTICS_ENGINE);
     const traceId = `workflow-${this.name || Date.now()}`;
 
     await logger.info('Workflow started', {

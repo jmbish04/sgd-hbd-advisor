@@ -1,6 +1,18 @@
 import { drizzle } from 'drizzle-orm/d1';
 import { traces, traceEvents, logs } from '../db/schema';
 
+// Define the structure for Analytics Engine events
+interface AnalyticsEngineEvent {
+  doubles?: number[];
+  blobs?: (string | null)[];
+  indexes?: (string | null)[];
+}
+
+// Define the structure for the Analytics Engine binding
+interface AnalyticsEngine {
+  writeDataPoint(event: AnalyticsEngineEvent): void;
+}
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 type TraceStatus = 'started' | 'success' | 'error';
 
@@ -23,17 +35,41 @@ interface LogContext {
 
 export class Logger {
   private db: ReturnType<typeof drizzle>;
+  private analytics?: AnalyticsEngine;
 
-  constructor(database: D1Database) {
+  constructor(database: D1Database, analyticsEngine?: AnalyticsEngine) {
     this.db = drizzle(database);
+    if (analyticsEngine) {
+      this.analytics = analyticsEngine;
+    }
   }
 
-  // Generate a simple UUID (for edge runtime compatibility)
   private generateId(): string {
     return crypto.randomUUID();
   }
 
-  // Create a new trace
+  private writeToAnalytics(level: LogLevel, component: string, message: string, context: Partial<LogContext>, duration?: number) {
+    if (!this.analytics) return;
+
+    try {
+      this.analytics.writeDataPoint({
+        // Indexes are queryable in the Cloudflare dashboard
+        indexes: [level, component, context.sessionId || null, context.userId || null],
+        // Blobs are arbitrary string data
+        blobs: [
+          message,
+          context.traceId || null,
+          context.requestId || null,
+          context.metadata ? JSON.stringify(context.metadata) : null,
+        ],
+        // Doubles are numeric data
+        doubles: duration ? [duration] : [],
+      });
+    } catch (error) {
+      console.error("Failed to write to Analytics Engine:", error);
+    }
+  }
+
   async startTrace(context: TraceContext): Promise<string> {
     const id = this.generateId();
     const now = new Date().toISOString();
@@ -53,7 +89,6 @@ export class Logger {
         createdAt: now,
       });
 
-      // Also log the trace start
       await this.logEvent({
         traceId: context.traceId,
         level: 'info',
@@ -65,13 +100,11 @@ export class Logger {
 
       return id;
     } catch (error) {
-      // Fallback to console if DB fails
       console.error('Failed to start trace:', error);
       return id;
     }
   }
 
-  // End a trace
   async endTrace(
     id: string,
     status: 'success' | 'error',
@@ -80,8 +113,7 @@ export class Logger {
     const now = new Date().toISOString();
 
     try {
-      // Get the trace to calculate duration
-      const trace = await this.db.select().from(traces).where(eq(traces.id, id)).get();
+      const trace = await this.db.select().from(traces).where(traces.id, id).get();
 
       if (trace) {
         const duration = new Date(now).getTime() - new Date(trace.startTime).getTime();
@@ -95,7 +127,6 @@ export class Logger {
           })
           .where(traces.id, id);
 
-        // Log the trace end
         await this.logEvent({
           traceId: trace.traceId,
           level: status === 'success' ? 'info' : 'error',
@@ -110,7 +141,6 @@ export class Logger {
     }
   }
 
-  // Log an event within a trace
   async logEvent(params: {
     traceId: string;
     level: LogLevel;
@@ -137,7 +167,8 @@ export class Logger {
         createdAt: now,
       });
 
-      // Also output to console for real-time debugging
+      this.writeToAnalytics(params.level, params.component, `${params.action}: ${params.message}`, { traceId: params.traceId, metadata: params.data });
+
       const logMethod = params.level === 'error' ? console.error : console.log;
       logMethod(`[${params.level.toUpperCase()}] [${params.component}] ${params.action}: ${params.message}`, params.data || '');
     } catch (error) {
@@ -145,7 +176,6 @@ export class Logger {
     }
   }
 
-  // General logging (can be standalone or linked to a trace)
   async log(
     level: LogLevel,
     message: string,
@@ -169,7 +199,8 @@ export class Logger {
         createdAt: now,
       });
 
-      // Also output to console
+      this.writeToAnalytics(level, context.component, message, context);
+
       const logMethod = level === 'error' || level === 'fatal' ? console.error : console.log;
       logMethod(`[${level.toUpperCase()}] [${context.component}] ${message}`, context.metadata || '', error || '');
     } catch (err) {
@@ -177,7 +208,6 @@ export class Logger {
     }
   }
 
-  // Convenience methods
   async debug(message: string, context: LogContext) {
     await this.log('debug', message, context);
   }
@@ -199,7 +229,6 @@ export class Logger {
   }
 }
 
-// Trace decorator/wrapper for automatic tracing
 export async function withTrace<T>(
   logger: Logger,
   context: TraceContext,
