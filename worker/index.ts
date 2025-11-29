@@ -1,11 +1,12 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { handle } from 'hono/cloudflare-workers'
-import { chatApi } from '@api/modules/chat'
-import { healthApi } from '@api/modules/health'
-import { productsApi } from '@api/modules/dummyjson'
-import { createOpenApiSpec } from '@api/utils/openapi'
-import { WebSocketServer } from '@api/do/websocket'
-import { mcpAgent } from '@api/modules/mcp'
+import { chatApi } from './modules/chat'
+import { healthApi } from './modules/health'
+import { productsApi } from './modules/dummyjson'
+import { createOpenApiSpec } from './utils/openapi'
+import { WebSocketServer } from './do/websocket'
+import { mcpAgent } from './modules/mcp'
+import { AdvisorAgent } from '../src/agent'
+import { MarketScanWorkflow } from '../src/workflow'
 
 /**
  * Environment bindings for the Cloudflare Worker
@@ -164,25 +165,7 @@ export default {
     // - API routes: /api/*
     // - Static assets: Served from ASSETS binding
     // - SPA: React application with client-side routing
-    try {
-      // Hono's handle() function provides SPA + API serving
-      // It serves static assets from the ASSETS binding for any request
-      // not matched by the Hono app routes
-      return await handle(app)(request, env, ctx)
-    } catch (error) {
-      // Log and return generic error response for security
-      console.error('Application Error:', error)
-      return new Response(
-        JSON.stringify({
-          error: 'Internal Server Error',
-          message: 'An unexpected error occurred',
-        }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      )
-    }
+    return app.fetch(request, env, ctx)
   },
 }
 
@@ -206,3 +189,7 @@ export { WebSocketServer }
  * Must match the class_name in wrangler.toml migrations
  */
 export { mcpAgent as CloudflareMcpAgent }
+
+export { AdvisorAgent }
+
+export { MarketScanWorkflow }

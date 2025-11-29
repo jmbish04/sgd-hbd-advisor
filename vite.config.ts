@@ -1,25 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import cloudflare from 'vite-plugin-cloudflare'
 import path from 'path'
 
 // This is the Vite config for the React SPA (frontend)
 export default defineConfig({
+  root: 'client',
   plugins: [
-    // This plugin manages the dev server, proxies API calls
-    // to the worker, and handles HMR.
-    cloudflare({
-      scriptPath: './worker/index.ts',
-    }),
     react(),
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, './client'),
     },
   },
   build: {
-    outDir: './dist', // Build the SPA to /dist
+    outDir: './dist', // Build the SPA to /client/dist
     // Optimize for Cloudflare Workers
     minify: 'esbuild', // Fast, efficient minification
     target: 'esnext', // Modern JS for Workers runtime
@@ -34,7 +29,6 @@ export default defineConfig({
     },
   },
   server: {
-    // Proxy is handled by vite-plugin-cloudflare
     port: 5173,
   }
 })
