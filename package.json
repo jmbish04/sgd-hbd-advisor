@@ -4,7 +4,6 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "preinstall": "npm install --save-dev @rollup/rollup-darwin-arm64",
     "dev": "concurrently \"wrangler dev\" \"bun run dev:client\"",
     "build": "bun install && bun run build:client",
     "deploy": "npm run build && npm run migrate:remote && wrangler deploy",
@@ -27,7 +26,6 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",
-    "@rollup/rollup-darwin-arm64": "^4.53.3",
     "concurrently": "^9.1.0",
     "drizzle-kit": "^0.28.0",
     "typescript": "^5.7.2",
