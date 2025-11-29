@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Page } from '@/App'
+import CurrencyToggle from '@/components/FX/CurrencyToggle'
 
 interface MainLayoutProps {
   children: React.ReactNode
@@ -13,13 +14,17 @@ export function MainLayout({ children, currentPage, setPage }: MainLayoutProps) 
     { name: 'Dashboard', page: 'dashboard' as Page },
     { name: 'Chat', page: 'chat' as Page },
     { name: 'Health', page: 'health' as Page },
+    { name: 'Admin', page: 'admin' as Page },
   ]
 
   return (
     <div className="flex min-h-screen">
       <div className="flex flex-col w-64 border-r bg-muted/40 p-4">
         <div className="mb-8">
-          <h2 className="text-xl font-bold">Gold Standard</h2>
+          <h2 className="text-xl font-bold">HDB Advisor</h2>
+          <div className="mt-3">
+            <CurrencyToggle />
+          </div>
         </div>
         <nav className="flex-1 space-y-2">
           {navItems.map((item) => (
