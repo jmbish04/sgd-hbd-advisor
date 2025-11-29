@@ -29,6 +29,11 @@ id = "80f8c30b48ad4112ba0b5d27e573f6eb"
 name = "ADVISOR_AGENT"
 class_name = "AdvisorAgent"
 
+# Durable Object Binding for WebSocket Handler
+[[durable_objects.bindings]]
+name = "WS_HANDLER"
+class_name = "WebSocketServer"
+
 # Workflow Binding
 [[workflows]]
 name = "market-scan-workflow"
@@ -39,4 +44,4 @@ class_name = "MarketScanWorkflow"
 # This enables the SQL API and state management features in the Agents SDK
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["AdvisorAgent"]
+new_sqlite_classes = ["AdvisorAgent", "WebSocketServer"]
