@@ -10,7 +10,7 @@ export default function AdminConfig() {
 
   const handleSave = () => {
     // TODO: Implement API call to save configuration
-    console.log("Saving configuration:", config);
+    console.log("Saving configuration: API key provided.");
   };
 
   return (
