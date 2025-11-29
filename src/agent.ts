@@ -1,12 +1,11 @@
-import { Agent } from "agents";
-import { callGeminiApi } from "./lib/gemini";
+import { Agent, Connection, ConnectionContext, WSMessage } from "agents";
+import { getGeminiClient } from "./lib/gemini";
 import { Logger, withTrace } from "./lib/logger";
 
 interface Env {
   DB: D1Database;
   KV: KVNamespace;
-  CLOUDFLARE_ACCOUNT_ID: string;
-  GOOGLE_AI_API_KEY: string;
+  GEMINI_API_KEY: string;
 }
 
 interface ChatMessage {
@@ -26,7 +25,7 @@ export class AdvisorAgent extends Agent<Env, ChatState> {
   // Initial state persisted to SQLite storage
   initialState: ChatState = {
     messages: [],
-    model: "gemini-2.0-flash-exp"
+    model: "gemini-1.5-flash" // Updated default model
   };
 
   // Initialize logger
@@ -48,7 +47,7 @@ export class AdvisorAgent extends Agent<Env, ChatState> {
       sessionId: this.name,
       metadata: {
         agentName: this.name,
-        userAgent: ctx.request.headers.get('user-agent'),
+        userAgent: ctx.request.headers.get('user-agent') || 'Unknown',
         codeLocation: 'AdvisorAgent.onConnect'
       }
     });
@@ -139,7 +138,7 @@ export class AdvisorAgent extends Agent<Env, ChatState> {
 
           const configStr = await this.env.KV.get("system_config");
           const config = configStr ? (()=>{ try { return JSON.parse(configStr) } catch(e) { console.error('Failed to parse system_config from KV', e); return {}; } })() : {};
-          const modelName = config.model_smart || "gemini-2.0-flash-exp";
+          const modelName = config.model_smart || "gemini-1.5-flash";
 
           await logger.logEvent({
             traceId,
@@ -177,7 +176,7 @@ export class AdvisorAgent extends Agent<Env, ChatState> {
             model: modelName
           });
 
-          // Call Gemini via AI Gateway
+          // Call Gemini via AI Gateway using the official SDK
           await logger.logEvent({
             traceId,
             level: 'info',
@@ -192,10 +191,11 @@ export class AdvisorAgent extends Agent<Env, ChatState> {
           });
 
           const startTime = Date.now();
-          const geminiResponse = await callGeminiApi(this.env, modelName, data.content);
-          // Assuming the response has a structure like { candidates: [{ content: { parts: [{ text: "..." }] } }] }
-          // This can be fragile; robust parsing is recommended.
-          const responseText = geminiResponse.candidates[0]?.content?.parts[0]?.text || "Sorry, I couldn't process that.";
+          const { getModel } = getGeminiClient(this.env);
+          const model = getModel(modelName);
+          const result = await model.generateContent(data.content);
+          const response = result.response;
+          const responseText = response.text();
           const duration = Date.now() - startTime;
 
           await logger.logEvent({

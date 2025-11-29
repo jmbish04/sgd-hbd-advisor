@@ -1,12 +1,11 @@
 import { WorkflowEntrypoint, WorkflowStep, WorkflowEvent } from 'cloudflare:workers';
-import { callGeminiApi } from './lib/gemini';
+import { getGeminiClient } from './lib/gemini';
 import { Logger } from './lib/logger';
 
 interface Env {
   KV: KVNamespace;
   DB: D1Database;
-  CLOUDFLARE_ACCOUNT_ID: string;
-  GOOGLE_AI_API_KEY: string;
+  GEMINI_API_KEY: string;
 }
 
 interface Params {
@@ -17,14 +16,14 @@ interface Params {
 export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
   async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
     const logger = new Logger(this.env.DB);
-    const traceId = `workflow-${event.id || Date.now()}`;
+    const traceId = `workflow-${this.name || Date.now()}`;
 
     await logger.info('Workflow started', {
       component: 'MarketScanWorkflow',
       traceId,
       metadata: {
         triggerType: event.payload.triggerType,
-        workflowId: event.id,
+        workflowId: this.name,
         codeLocation: 'workflow.ts:run:23'
       }
     });
@@ -35,7 +34,7 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
       name: 'market_scan_workflow',
       metadata: {
         triggerType: event.payload.triggerType,
-        workflowId: event.id
+        workflowId: this.name
       }
     });
 
@@ -52,7 +51,7 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
 
       const config = await step.do('fetch-config', async () => {
         const configStr = await this.env.KV.get("system_config");
-        const parsedConfig = configStr ? (()=>{ try { return JSON.parse(configStr) } catch(e) { console.error('Failed to parse system_config from KV, using default', e); return {}; } })() : { model_fast: "gemini-2.0-flash-exp" };
+        const parsedConfig = configStr ? (()=>{ try { return JSON.parse(configStr) } catch(e) { console.error('Failed to parse system_config from KV, using default', e); return {}; } })() : { model_fast: "gemini-1.5-flash" };
 
         await logger.logEvent({
           traceId,
@@ -118,9 +117,11 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
 
       const analysis = await step.do('ai-analysis', async () => {
         const startTime = Date.now();
+        const { getModel } = getGeminiClient(this.env);
+        const model = getModel(config.model_fast);
         const prompt = `Analyze this HDB market data: ${JSON.stringify(marketData)}`;
-        const geminiResponse = await callGeminiApi(this.env, config.model_fast, prompt);
-        const analysisText = geminiResponse.candidates[0]?.content?.parts[0]?.text || "Analysis could not be generated.";
+        const result = await model.generateContent(prompt);
+        const analysisText = result.response.text();
         const duration = Date.now() - startTime;
 
         await logger.logEvent({
@@ -206,7 +207,7 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
         component: 'MarketScanWorkflow',
         traceId,
         metadata: {
-          workflowId: event.id,
+          workflowId: this.name,
           codeLocation: 'workflow.ts:run:202'
         }
       });
@@ -222,7 +223,7 @@ export class MarketScanWorkflow extends WorkflowEntrypoint<Env, Params> {
         component: 'MarketScanWorkflow',
         traceId,
         metadata: {
-          workflowId: event.id,
+          workflowId: this.name,
           codeLocation: 'workflow.ts:run:218'
         }
       }, error as Error);
