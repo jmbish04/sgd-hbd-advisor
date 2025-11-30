@@ -14,4 +14,30 @@ export type { Env }; // Export the Env type
 
 const app = new OpenAPIHono<{ Bindings: Env }>();
 
-// ... (rest of the file is correct)
+// Mount API routes
+app.route('/api/chat', chatApi);
+app.route('/api/health', healthApi);
+app.route('/api/products', productsApi);
+app.route('/agents', mcpAgent);
+
+// OpenAPI spec endpoint
+app.get('/openapi', createOpenApiSpec(app));
+
+// Durable Objects
+export { WebSocketServer, AdvisorAgent };
+
+// Workflows
+export { MarketScanWorkflow };
+
+// Cron trigger handler
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    return app.fetch(request, env, ctx);
+  },
+
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    // Handle cron triggers for scheduled data scraping
+    const workflow = new MarketScanWorkflow(env, ctx);
+    await workflow.run();
+  },
+};
