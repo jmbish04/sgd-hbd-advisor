@@ -48,6 +48,6 @@ export const marketSnapshots = sqliteTable('market_snapshots', {
   town: text('town').notNull(),
   flat_type: text('flat_type').notNull(),
   price: real('price').notNull(),
-  yield: real('yield'),
+  yield_rate: real('yield_rate'),
   created_at: text('created_at').notNull(),
 });
