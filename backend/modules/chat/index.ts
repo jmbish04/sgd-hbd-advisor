@@ -47,9 +47,9 @@ const chatSchema = createRoute({
 export const chatApi = new OpenAPIHono<{ Bindings: Env }>();
 
 chatApi.openapi(chatSchema, async (c) => {
-  const { messages, model: modelName } = await c.req.json();
+  const { messages, model: modelName } = c.req.valid('json');
 
-  const lastUserMessage = messages.filter((m: any) => m.role === 'user').pop();
+  const lastUserMessage = messages.findLast((m) => m.role === 'user');
 
   if (!lastUserMessage) {
     return c.json({ error: 'No user message found' }, 400);
