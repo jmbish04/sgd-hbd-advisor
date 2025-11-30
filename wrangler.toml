@@ -1,4 +1,4 @@
-name = "hdb-autonomous-agent"
+name = "sgd-hbd-advisor"
 main = "src/index.ts"
 compatibility_date = "2025-04-03"
 compatibility_flags = ["nodejs_compat"]
@@ -43,9 +43,16 @@ name = "market-scan-workflow"
 binding = "MARKET_SCAN_WORKFLOW"
 class_name = "MarketScanWorkflow"
 
+# AI Binding
+[ai]
+binding = "AI"
+
+# Observability (Workers Logs)
+[observability]
+enabled = true
+
 # CRITICAL: Use new_sqlite_classes for SQLite storage backend on new DO classes
 # This enables the SQL API and state management features in the Agents SDK
 [[migrations]]
 tag = "v1"
-new_sqlite_classes = ["AdvisorAgent"]
-new_classes = ["WebSocketServer"]
+new_sqlite_classes = ["AdvisorAgent", "WebSocketServer"]

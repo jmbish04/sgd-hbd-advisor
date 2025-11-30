@@ -151,3 +151,4 @@ wrangler.toml.local
 
 # Client build
 client/dist
+.DS_Store
