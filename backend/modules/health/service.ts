@@ -1,4 +1,4 @@
-import { createDbClient } from '@api/db/client';
+import { createDbClient } from '../../db/client';
 // The healthChecks schema is not defined, so we cannot import it.
 // This service will need to be updated once the schema is defined.
 
