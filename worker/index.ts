@@ -1,12 +1,12 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { chatApi } from './modules/chat'
-import { healthApi } from './modules/health'
-import { productsApi } from './modules/dummyjson'
-import { createOpenApiSpec } from './utils/openapi'
-import { WebSocketServer } from './do/websocket'
-import { mcpAgent } from './modules/mcp'
-import { AdvisorAgent } from '../src/agent'
-import { MarketScanWorkflow } from '../src/workflow'
+import { handle } from 'hono/cloudflare-workers'
+import { chatApi } from '@api/modules/chat'
+import { healthApi } from '@api/modules/health'
+import { productsApi } from '@api/modules/dummyjson'
+import { fxApi } from '@api/modules/fx'
+import { createOpenApiSpec } from '@api/utils/openapi'
+import { WebSocketServer } from '@api/do/websocket'
+import { mcpAgent } from '@api/modules/mcp'
 
 /**
  * Environment bindings for the Cloudflare Worker
@@ -25,6 +25,7 @@ type Env = {
   WS_HANDLER: DurableObjectNamespace<WebSocketServer>
   GEMINI_API_KEY: string
   ASSETS: Fetcher
+  KV_CACHE: KVNamespace
   // MCP authentication settings (optional)
   // Enable these in wrangler.toml for production
   MCP_AUTH_ENABLED?: string
@@ -46,6 +47,7 @@ const app = new OpenAPIHono<{ Bindings: Env }>()
 app.route('/api/chat', chatApi)
 app.route('/api/health', healthApi)
 app.route('/api/products', productsApi)
+app.route('/api/fx', fxApi)
 
 /**
  * WebSocket Endpoint
@@ -165,33 +167,26 @@ export default {
     // - API routes: /api/*
     // - Static assets: Served from ASSETS binding
     // - SPA: React application with client-side routing
-    return app.fetch(request, env, ctx)
+    try {
+      // Hono's handle() function provides SPA + API serving
+      // It serves static assets from the ASSETS binding for any request
+      // not matched by the Hono app routes
+      return await handle(app)(request, env, ctx)
+    } catch (error) {
+      // Log and return generic error response for security
+      console.error('Application Error:', error)
+      return new Response(
+        JSON.stringify({
+          error: 'Internal Server Error',
+          message: 'An unexpected error occurred',
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
   },
-
-  /**
-   * Scheduled event handler for Cron Triggers.
-   *
-   * This function is executed based on the cron schedule defined in `wrangler.jsonc`.
-   * It starts the `MarketScanWorkflow` to periodically fetch and analyze market data.
-   *
-   * @param controller - The scheduled controller containing event details.
-   * @param env - The worker environment bindings.
-   * @param ctx - The execution context.
-   */
-  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
-    console.log(`Cron trigger received: ${controller.cron}`);
-    
-    // Instantiate the workflow
-    const workflow = new MarketScanWorkflow(env);
-
-    // Start the workflow with a unique ID based on the scheduled time
-    await workflow.start(`market-scan-${controller.scheduledTime}`, {
-      triggerType: 'cron',
-      metadata: { cron: controller.cron }
-    });
-
-    console.log(`Started MarketScanWorkflow with ID: market-scan-${controller.scheduledTime}`);
-  }
 }
 
 // ============================================================================
@@ -214,7 +209,3 @@ export { WebSocketServer }
  * Must match the class_name in wrangler.toml migrations
  */
 export { mcpAgent as CloudflareMcpAgent }
-
-export { AdvisorAgent }
-
-export { MarketScanWorkflow }

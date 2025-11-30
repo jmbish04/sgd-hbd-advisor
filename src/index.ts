@@ -319,7 +319,7 @@ export default {
     // Alternative: Direct agent access by name
     if (url.pathname === '/api/chat') {
       const agentName = url.searchParams.get('agent') || 'default';
-      const agent = await getAgentByName<Env, AdvisorAgent>(
+      const agent = await getAgentByName(
         env.ADVISOR_AGENT,
         agentName
       );

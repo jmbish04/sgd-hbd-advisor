@@ -4,17 +4,17 @@ import path from 'path'
 
 // This is the Vite config for the React SPA (frontend)
 export default defineConfig({
-  root: 'client',
+  root: 'frontend',
   plugins: [
     react(),
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './client'),
+      '@': path.resolve(__dirname, './frontend'),
     },
   },
   build: {
-    outDir: './dist', // Build the SPA to /client/dist
+    outDir: './dist', // Build the SPA to /frontend/dist
     // Optimize for Cloudflare Workers
     minify: 'esbuild', // Fast, efficient minification
     target: 'esnext', // Modern JS for Workers runtime

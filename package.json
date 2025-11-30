@@ -20,17 +20,23 @@
   "dependencies": {
     "@ai-sdk/google": "^2.0.44",
     "@google/generative-ai": "^0.21.0",
+    "@heroui/react": "^2.8.5",
     "@hono/zod-openapi": "^1.1.5",
     "agents": "^0.2.25",
+    "chart.js": "^4.5.1",
     "drizzle-orm": "^0.36.0",
     "hono": "^4.0.0",
     "kysely": "^0.28.8",
     "kysely-d1": "^0.4.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.555.0",
     "react": "^18.3.1",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",
     "react-is": "^19.2.0",
+    "react-leaflet": "^5.0.0",
     "recharts": "^3.5.1",
+    "swr": "^2.3.7",
     "zod": "^3.23.0"
   },
   "devDependencies": {

@@ -17,10 +17,9 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@api/*": ["worker/*"],
-      "@/*": ["./client/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "worker/**/*", "client/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "client", "dist"]
 }
