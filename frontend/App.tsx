@@ -33,7 +33,7 @@ function App() {
 
     client.onmessage = (event) => {
       try {
-        const data: any = JSON.parse(event.data);
+        const data: WebSocketMessage = JSON.parse(event.data);
 
         if (data.type === 'INIT') {
           // Initialize with existing state
