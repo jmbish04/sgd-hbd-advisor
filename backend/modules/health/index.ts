@@ -36,7 +36,7 @@ export const healthApi = new OpenAPIHono<{ Bindings: Env }>();
 healthApi.openapi(healthSchema, async (c) => {
   const service = new HealthService(c.env.DB);
   const checks = await service.getHealthChecks();
-  const overallStatus = checks.every((check: any) => check.status === 'PASS') ? 'PASS' : 'FAIL';
+  const overallStatus = checks.every((check: { status: string }) => check.status === 'PASS') ? 'PASS' : 'FAIL';
   const httpStatus = overallStatus === 'PASS' ? 200 : 503;
   return c.json({ overallStatus, checks }, httpStatus);
 });
