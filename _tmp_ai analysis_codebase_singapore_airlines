@@ -1,0 +1,125 @@
+You are an expert in full-stack development, specializing in modern frontend build tooling (Vite, PostCSS, Rollup) and Cloudflare environments. Your task is to solve a persistent build failure in a Vite-based React application that uses Tailwind CSS.
+
+**High-Level Goal:**
+
+Fix the Vite build process for a React SPA so it correctly processes Tailwind CSS via PostCSS. The worker part of the project is deploying successfully, but the client build is blocked by a specific, recurring PostCSS error.
+
+**The Core Problem:**
+
+When running `vite build`, the process fails with the following error as soon as Tailwind CSS is introduced as a PostCSS plugin:
+
+```
+[vite:css] [postcss] It looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The PostCSS plugin has moved to a separate package, so to continue using Tailwind CSS with PostCSS you'll need to install `@tailwindcss/postcss` and update your PostCSS configuration.
+```
+
+This error persists despite having the correct dependencies installed and trying numerous configuration strategies.
+
+**Project Context & Key Technologies:**
+
+*   **Frameworks:** React 18, Hono v4
+*   **Build Tool:** Vite v5.4
+*   **Styling:** Tailwind CSS v4.1, PostCSS v8.5, Autoprefixer v10.4
+*   **Environment:** Cloudflare Workers & Pages
+*   **Project Structure:** The project is a monorepo-style setup with code separated into:
+    *   `worker/`: Server-side Cloudflare Worker code (Hono routes, etc.).
+    *   `src/`: Shared server-side logic (Durable Objects, Workflows).
+    *   `client/`: The React SPA, which is the root for the Vite build.
+
+**Relevant Configuration Files:**
+
+1.  **`vite.config.ts`** (Located in the project root)
+    ```typescript
+    import { defineConfig } from 'vite'
+    import react from '@vitejs/plugin-react'
+    import path from 'path'
+
+    export default defineConfig({
+      root: 'client', // Vite's root is the client directory
+      plugins: [react()],
+      resolve: {
+        alias: {
+          '@': path.resolve(__dirname, './client'),
+        },
+      },
+      build: {
+        outDir: './dist', // Output to client/dist
+        minify: 'esbuild',
+        target: 'esnext',
+      },
+    })
+    ```
+
+2.  **`tailwind.config.cjs`** (Located in the project root)
+    ```javascript
+    /** @type {import('tailwindcss').Config} */
+    module.exports = {
+      content: [
+        './client/**/*.{js,ts,jsx,tsx,html}',
+      ],
+      theme: {
+        extend: {},
+      },
+      plugins: [require("tailwindcss-animate")],
+    }
+    ```
+
+3.  **`postcss.config.cjs`** (Located in the project root)
+    ```javascript
+    module.exports = {
+      plugins: {
+        tailwindcss: {},
+        autoprefixer: {},
+      },
+    }
+    ```
+
+4.  **`package.json` (Key Sections)**
+    ```json
+    {
+      "type": "module",
+      "scripts": {
+        "build:client": "vite build"
+      },
+      "dependencies": {
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "hono": "^4.0.0",
+        // ... other worker dependencies
+      },
+      "devDependencies": {
+        "@tailwindcss/postcss": "^4.1.17",
+        "@vitejs/plugin-react": "^4.7.0",
+        "autoprefixer": "^10.4.22",
+        "postcss": "^8.5.6",
+        "tailwindcss": "^4.1.17",
+        "tailwindcss-animate": "^1.0.7",
+        "typescript": "^5.9.3",
+        "vite": "^5.4.21",
+        "wrangler": "^4.51.0"
+      }
+    }
+    ```
+
+5.  **`client/index.css`**
+    ```css
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+    ```
+
+**Summary of Failed Troubleshooting Steps:**
+
+The core issue is isolated to the PostCSS/Tailwind configuration. The build succeeds perfectly when these dependencies and their config files are removed. The following attempts to fix it have all failed, resulting in the exact same error message:
+
+1.  **Dependency Verification:** Confirmed `@tailwindcss/postcss` is installed. Tried fresh installs after deleting `node_modules` and lockfiles.
+2.  **PostCSS Config Formats:**
+    *   Tried object syntax (`plugins: { tailwindcss: {} }`).
+    *   Tried array syntax (`plugins: ['tailwindcss']`).
+    *   Tried `require('tailwindcss')`.
+3.  **Module System:** The project uses ES Modules (`"type": "module"`). I have tried using both `.js` and `.cjs` extensions for the config files, ensuring `module.exports` is used with `.cjs`.
+4.  **Minimalist Approach:** Stripped both `tailwind.config.cjs` and `postcss.config.cjs` down to the absolute minimum required content. The error still occurs.
+5.  **Cloudflare Docs:** The official Cloudflare documentation confirms that Vite is a supported tool for Pages. The standard build command (`npm run build`) and output directory (`dist`) are recommended, which aligns with my setup. There are no documented special requirements or known issues for using PostCSS/Tailwind with Vite on Cloudflare Pages.
+
+**The Ask:**
+
+Please provide a definitive solution to resolve this build error. Analyze the provided configurations, project structure, and troubleshooting history to identify the root cause. Provide the corrected and complete configuration files (`postcss.config.js` or `.cjs`, `tailwind.config.js` or `.cjs`, and `vite.config.ts`) and any necessary commands to run. The final solution should allow the `npm run build:client` command to succeed.
