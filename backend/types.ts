@@ -5,9 +5,9 @@ import { AdvisorAgent } from './agent';
 export type Env = {
   AI: Ai;
   DB: D1Database;
-  WS_HANDLER: DurableObjectNamespace;
-  ADVISOR_AGENT: DurableObjectNamespace;
-  MARKET_SCAN_WORKFLOW: any; // Workflow binding
+  WS_HANDLER: DurableObjectNamespace<WebSocketServer>;
+  ADVISOR_AGENT: DurableObjectNamespace<AdvisorAgent>;
+  MARKET_SCAN_WORKFLOW: Workflow<typeof MarketScanWorkflow>; // Or other appropriate workflow type
   KV: KVNamespace;
   ASSETS: Fetcher;
   GEMINI_API_KEY: string;
